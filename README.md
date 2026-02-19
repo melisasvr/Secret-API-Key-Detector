@@ -1,6 +1,6 @@
 # 🔍 Secret & API Key Detector
 
-A lightweight, zero-dependency Python tool that scans your codebase for hardcoded secrets, API keys, tokens, and passwords — before they end up on GitHub.
+A lightweight, zero-dependency Python tool that scans your codebase for hardcoded secrets, API keys, tokens, and passwords before they end up on GitHub.
 
 ![Python](https://img.shields.io/badge/Python-3.10+-3776AB?style=flat-square&logo=python&logoColor=white)
 ![License](https://img.shields.io/badge/License-MIT-22c55e?style=flat-square)
