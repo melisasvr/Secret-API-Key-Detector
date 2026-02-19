@@ -1,0 +1,836 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Secret Detector—Dashboard</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,300;0,400;0,600;0,700;1,400&family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
+
+    :root {
+      --bg:          #07090f;
+      --surface:     #0d1117;
+      --surface2:    #161b27;
+      --surface3:    #1c2333;
+      --border:      #21293d;
+      --border2:     #2d3a52;
+      --text:        #cdd5e0;
+      --text-dim:    #8892a4;
+      --text-muted:  #4a556a;
+      --critical:    #ff4757;
+      --critical-dim:#ff475740;
+      --critical-bg: #1a0508;
+      --high:        #ff7f23;
+      --high-dim:    #ff7f2340;
+      --high-bg:     #1a0900;
+      --medium:      #ffd32a;
+      --medium-dim:  #ffd32a40;
+      --medium-bg:   #1a1400;
+      --low:         #2ed573;
+      --low-dim:     #2ed57340;
+      --low-bg:      #001a0c;
+      --accent:      #5e81f4;
+      --accent-dim:  #5e81f430;
+      --green:       #2ed573;
+      --purple:      #a78bfa;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Space Grotesk', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ═══ SCAN GRID BACKGROUND ═══ */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(94,129,244,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(94,129,244,0.03) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .page { position: relative; z-index: 1; }
+
+    /* ═══ TOP BAR ═══ */
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1rem 2.5rem;
+      border-bottom: 1px solid var(--border);
+      background: rgba(7,9,15,0.9);
+      backdrop-filter: blur(12px);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .topbar-brand {
+      display: flex;
+      align-items: center;
+      gap: 0.7rem;
+      font-size: 1rem;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+    }
+    .brand-icon {
+      width: 32px; height: 32px;
+      background: linear-gradient(135deg, var(--accent), #8b5cf6);
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1rem;
+      box-shadow: 0 0 20px var(--accent-dim);
+    }
+    .status-pill {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-size: 0.7rem;
+      color: var(--text-dim);
+      font-family: 'JetBrains Mono', monospace;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      padding: 0.3rem 0.7rem;
+      border-radius: 20px;
+    }
+    .status-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--green);
+      box-shadow: 0 0 6px var(--green);
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+
+    /* ═══ HERO ═══ */
+    .hero {
+      padding: 4rem 2.5rem 3rem;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero::before {
+      content: '';
+      position: absolute;
+      top: -100px; right: -100px;
+      width: 500px; height: 500px;
+      background: radial-gradient(circle, rgba(94,129,244,0.07) 0%, transparent 60%);
+      pointer-events: none;
+    }
+    .hero::after {
+      content: '';
+      position: absolute;
+      bottom: -50px; left: 200px;
+      width: 300px; height: 300px;
+      background: radial-gradient(circle, rgba(255,71,87,0.05) 0%, transparent 60%);
+      pointer-events: none;
+    }
+    .hero-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.68rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--accent);
+      background: var(--accent-dim);
+      border: 1px solid rgba(94,129,244,0.3);
+      padding: 0.3rem 0.8rem;
+      border-radius: 20px;
+      margin-bottom: 1.5rem;
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .hero h1 {
+      font-size: clamp(2rem, 4vw, 3.2rem);
+      font-weight: 700;
+      line-height: 1.1;
+      letter-spacing: -0.03em;
+      margin-bottom: 1rem;
+      max-width: 700px;
+    }
+    .hero h1 span {
+      background: linear-gradient(90deg, var(--critical), var(--high), var(--accent));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .hero-desc {
+      font-size: 1rem;
+      color: var(--text-dim);
+      max-width: 560px;
+      line-height: 1.7;
+      margin-bottom: 2rem;
+    }
+    .hero-actions {
+      display: flex;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+    }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.65rem 1.3rem;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      font-family: 'Space Grotesk', sans-serif;
+      cursor: pointer;
+      text-decoration: none;
+      transition: all 0.2s;
+      border: none;
+    }
+    .btn-primary {
+      background: var(--accent);
+      color: #fff;
+      box-shadow: 0 4px 20px var(--accent-dim);
+    }
+    .btn-primary:hover { background: #4f70e0; transform: translateY(-1px); box-shadow: 0 6px 24px var(--accent-dim); }
+    .btn-secondary {
+      background: var(--surface2);
+      color: var(--text);
+      border: 1px solid var(--border2);
+    }
+    .btn-secondary:hover { background: var(--surface3); transform: translateY(-1px); }
+
+    /* ═══ STATS ROW ═══ */
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 1px;
+      background: var(--border);
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+    }
+    .stat-block {
+      background: var(--surface);
+      padding: 1.5rem 1.8rem;
+      position: relative;
+      overflow: hidden;
+      transition: background 0.2s;
+    }
+    .stat-block:hover { background: var(--surface2); }
+    .stat-block::after {
+      content: '';
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      height: 2px;
+    }
+    .stat-block.c::after { background: var(--critical); }
+    .stat-block.h::after { background: var(--high); }
+    .stat-block.m::after { background: var(--medium); }
+    .stat-block.l::after { background: var(--low); }
+    .stat-block.t::after { background: var(--accent); }
+    .stat-block.f::after { background: var(--purple); }
+    .stat-label {
+      font-size: 0.65rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--text-muted);
+      margin-bottom: 0.5rem;
+    }
+    .stat-value {
+      font-size: 2.2rem;
+      font-weight: 700;
+      font-family: 'JetBrains Mono', monospace;
+      line-height: 1;
+      margin-bottom: 0.2rem;
+    }
+    .stat-block.c .stat-value { color: var(--critical); }
+    .stat-block.h .stat-value { color: var(--high); }
+    .stat-block.m .stat-value { color: var(--medium); }
+    .stat-block.l .stat-value { color: var(--low); }
+    .stat-block.t .stat-value { color: var(--accent); }
+    .stat-block.f .stat-value { color: var(--purple); }
+    .stat-sub { font-size: 0.68rem; color: var(--text-muted); }
+
+    /* ═══ MAIN CONTENT ═══ */
+    .content {
+      display: grid;
+      grid-template-columns: 1fr 340px;
+      gap: 0;
+      min-height: 600px;
+    }
+    @media (max-width: 960px) { .content { grid-template-columns: 1fr; } }
+
+    /* ═══ LEFT PANEL ═══ */
+    .panel-main {
+      border-right: 1px solid var(--border);
+      padding: 2rem 2.5rem;
+    }
+
+    .section-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1.2rem;
+    }
+    .section-title {
+      font-size: 0.68rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--text-muted);
+    }
+
+    /* ── Filter chips ── */
+    .chips {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      margin-bottom: 1.5rem;
+    }
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      padding: 0.3rem 0.75rem;
+      border-radius: 6px;
+      font-size: 0.7rem;
+      font-weight: 600;
+      cursor: pointer;
+      border: 1px solid transparent;
+      transition: all 0.15s;
+      font-family: 'JetBrains Mono', monospace;
+      background: var(--surface2);
+      color: var(--text-dim);
+      border-color: var(--border);
+    }
+    .chip:hover { border-color: var(--border2); color: var(--text); }
+    .chip.active-all      { background: var(--accent-dim);   color: var(--accent);   border-color: rgba(94,129,244,0.5); }
+    .chip.active-critical { background: var(--critical-bg);  color: var(--critical); border-color: rgba(255,71,87,0.5); }
+    .chip.active-high     { background: var(--high-bg);      color: var(--high);     border-color: rgba(255,127,35,0.5); }
+    .chip.active-medium   { background: var(--medium-bg);    color: var(--medium);   border-color: rgba(255,211,42,0.5); }
+    .chip.active-low      { background: var(--low-bg);       color: var(--low);      border-color: rgba(46,213,115,0.5); }
+
+    /* ── Finding cards ── */
+    .finding-list { display: flex; flex-direction: column; gap: 0.6rem; }
+    .finding-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-left: 3px solid transparent;
+      border-radius: 8px;
+      padding: 0.9rem 1rem;
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      gap: 0.6rem 1rem;
+      align-items: start;
+      transition: all 0.15s;
+      animation: slideIn 0.3s ease both;
+    }
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .finding-card:hover { background: var(--surface2); border-color: var(--border2); }
+    .finding-card.sev-critical { border-left-color: var(--critical); }
+    .finding-card.sev-high     { border-left-color: var(--high); }
+    .finding-card.sev-medium   { border-left-color: var(--medium); }
+    .finding-card.sev-low      { border-left-color: var(--low); }
+
+    .finding-badge {
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
+      font-size: 0.58rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      font-family: 'JetBrains Mono', monospace;
+      white-space: nowrap;
+      align-self: center;
+    }
+    .finding-badge.critical { background: var(--critical-bg); color: var(--critical); border: 1px solid rgba(255,71,87,0.3); }
+    .finding-badge.high     { background: var(--high-bg);     color: var(--high);     border: 1px solid rgba(255,127,35,0.3); }
+    .finding-badge.medium   { background: var(--medium-bg);   color: var(--medium);   border: 1px solid rgba(255,211,42,0.3); }
+    .finding-badge.low      { background: var(--low-bg);      color: var(--low);      border: 1px solid rgba(46,213,115,0.3); }
+
+    .finding-body { min-width: 0; }
+    .finding-pattern {
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 0.2rem;
+    }
+    .finding-file {
+      font-size: 0.68rem;
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--accent);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      margin-bottom: 0.35rem;
+    }
+    .finding-match {
+      font-size: 0.68rem;
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--text-muted);
+      background: rgba(255,255,255,0.03);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 0.25rem 0.5rem;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .finding-line {
+      font-size: 0.68rem;
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--text-muted);
+      white-space: nowrap;
+      align-self: center;
+    }
+
+    /* ═══ RIGHT SIDEBAR ═══ */
+    .panel-side { padding: 2rem 1.5rem; display: flex; flex-direction: column; gap: 2rem; }
+
+    /* ── Severity donut ── */
+    .donut-wrap { display: flex; flex-direction: column; align-items: center; }
+    .donut-chart {
+      width: 140px; height: 140px;
+      position: relative;
+      margin-bottom: 1rem;
+    }
+    .donut-chart svg { width: 100%; height: 100%; }
+    .donut-center {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+    .donut-center-num {
+      font-size: 1.8rem;
+      font-weight: 700;
+      font-family: 'JetBrains Mono', monospace;
+      line-height: 1;
+      color: var(--text);
+    }
+    .donut-center-label {
+      font-size: 0.55rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-muted);
+    }
+    .legend { display: flex; flex-direction: column; gap: 0.5rem; width: 100%; }
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      font-size: 0.75rem;
+    }
+    .legend-dot {
+      width: 8px; height: 8px;
+      border-radius: 2px;
+      flex-shrink: 0;
+    }
+    .legend-name { flex: 1; color: var(--text-dim); }
+    .legend-count { font-family: 'JetBrains Mono', monospace; font-weight: 600; }
+
+    /* ── Usage card ── */
+    .usage-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1.2rem;
+    }
+    .usage-title {
+      font-size: 0.68rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--text-muted);
+      margin-bottom: 0.9rem;
+    }
+    .cmd-block {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 0.7rem 0.9rem;
+      margin-bottom: 0.5rem;
+      position: relative;
+    }
+    .cmd-block code {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.68rem;
+      color: var(--medium);
+      display: block;
+      line-height: 1.6;
+    }
+    .cmd-block code .dim { color: var(--text-muted); }
+    .cmd-block code .flag { color: var(--accent); }
+    .cmd-block code .val { color: var(--low); }
+
+    /* ── Top patterns ── */
+    .pattern-list { display: flex; flex-direction: column; gap: 0.4rem; }
+    .pattern-row {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      font-size: 0.75rem;
+    }
+    .pattern-name { flex: 1; color: var(--text-dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .pattern-bar-wrap { width: 60px; height: 4px; background: var(--surface2); border-radius: 2px; }
+    .pattern-bar { height: 100%; border-radius: 2px; }
+    .pattern-count { font-family: 'JetBrains Mono', monospace; font-size: 0.68rem; color: var(--text-muted); width: 20px; text-align: right; }
+
+    /* ═══ FOOTER ═══ */
+    .footer {
+      border-top: 1px solid var(--border);
+      padding: 1.2rem 2.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 0.68rem;
+      color: var(--text-muted);
+      font-family: 'JetBrains Mono', monospace;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+    .footer a { color: var(--accent); text-decoration: none; }
+    .footer a:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <!-- TOP BAR -->
+  <nav class="topbar">
+    <div class="topbar-brand">
+      <div class="brand-icon">🔍</div>
+      Secret Detector
+    </div>
+    <div style="display:flex;gap:.6rem;align-items:center;">
+      <div class="status-pill">
+        <div class="status-dot"></div>
+        <span id="scan-time">Ready</span>
+      </div>
+    </div>
+  </nav>
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-tag">🛡 Security Scanner · Python</div>
+    <h1>Scan, Detect &<br/><span>Protect Your Secrets</span></h1>
+    <p class="hero-desc">
+      Drop your JSON report below to instantly visualize all hardcoded API keys, tokens,
+      and credentials found in your codebase — filtered, ranked, and ready to act on.
+    </p>
+    <div class="hero-actions">
+      <label class="btn btn-primary" style="cursor:pointer;" for="json-upload">
+        ⬆ Load report.json
+      </label>
+      <button class="btn btn-secondary" onclick="loadDemo()">▶ Load Demo Data</button>
+      <input type="file" id="json-upload" accept=".json" style="display:none" onchange="handleUpload(event)" />
+    </div>
+  </section>
+
+  <!-- STATS -->
+  <div class="stats-row" id="stats-row">
+    <div class="stat-block t"><div class="stat-label">Total Findings</div><div class="stat-value" id="stat-total">—</div><div class="stat-sub">all severities</div></div>
+    <div class="stat-block c"><div class="stat-label">Critical</div><div class="stat-value" id="stat-critical">—</div><div class="stat-sub">immediate action</div></div>
+    <div class="stat-block h"><div class="stat-label">High</div><div class="stat-value" id="stat-high">—</div><div class="stat-sub">fix soon</div></div>
+    <div class="stat-block m"><div class="stat-label">Medium</div><div class="stat-value" id="stat-medium">—</div><div class="stat-sub">review needed</div></div>
+    <div class="stat-block l"><div class="stat-label">Low</div><div class="stat-value" id="stat-low">—</div><div class="stat-sub">low risk</div></div>
+    <div class="stat-block f"><div class="stat-label">Files Affected</div><div class="stat-value" id="stat-files">—</div><div class="stat-sub">unique paths</div></div>
+  </div>
+
+  <!-- CONTENT -->
+  <div class="content">
+
+    <!-- MAIN PANEL -->
+    <div class="panel-main">
+      <div class="section-head">
+        <span class="section-title" id="findings-title">Findings</span>
+      </div>
+      <div class="chips" id="chips">
+        <button class="chip active-all" onclick="filterFindings('ALL')">All</button>
+        <button class="chip" onclick="filterFindings('CRITICAL')">🔴 Critical</button>
+        <button class="chip" onclick="filterFindings('HIGH')">🟠 High</button>
+        <button class="chip" onclick="filterFindings('MEDIUM')">🟡 Medium</button>
+        <button class="chip" onclick="filterFindings('LOW')">🟢 Low</button>
+      </div>
+      <div class="finding-list" id="finding-list">
+        <div style="color:var(--text-muted);font-size:.85rem;padding:3rem 0;text-align:center;">
+          Load a <code style="font-family:JetBrains Mono;color:var(--accent)">report.json</code> or click <strong>Load Demo Data</strong> to begin.
+        </div>
+      </div>
+    </div>
+
+    <!-- SIDEBAR -->
+    <div class="panel-side">
+
+      <div>
+        <div class="section-title" style="margin-bottom:1rem;">Severity Breakdown</div>
+        <div class="donut-wrap">
+          <div class="donut-chart">
+            <svg viewBox="0 0 100 100">
+              <circle cx="50" cy="50" r="40" fill="none" stroke="var(--surface2)" stroke-width="12"/>
+              <circle id="arc-critical" cx="50" cy="50" r="40" fill="none" stroke="var(--critical)"
+                stroke-width="12" stroke-linecap="butt"
+                stroke-dasharray="0 251.2" stroke-dashoffset="0"
+                transform="rotate(-90 50 50)" style="transition:stroke-dasharray .8s ease"/>
+              <circle id="arc-high" cx="50" cy="50" r="40" fill="none" stroke="var(--high)"
+                stroke-width="12" stroke-linecap="butt"
+                stroke-dasharray="0 251.2" stroke-dashoffset="0"
+                transform="rotate(-90 50 50)" style="transition:stroke-dasharray .8s ease"/>
+              <circle id="arc-medium" cx="50" cy="50" r="40" fill="none" stroke="var(--medium)"
+                stroke-width="12" stroke-linecap="butt"
+                stroke-dasharray="0 251.2" stroke-dashoffset="0"
+                transform="rotate(-90 50 50)" style="transition:stroke-dasharray .8s ease"/>
+              <circle id="arc-low" cx="50" cy="50" r="40" fill="none" stroke="var(--low)"
+                stroke-width="12" stroke-linecap="butt"
+                stroke-dasharray="0 251.2" stroke-dashoffset="0"
+                transform="rotate(-90 50 50)" style="transition:stroke-dasharray .8s ease"/>
+            </svg>
+            <div class="donut-center">
+              <div class="donut-center-num" id="donut-total">0</div>
+              <div class="donut-center-label">findings</div>
+            </div>
+          </div>
+          <div class="legend">
+            <div class="legend-item">
+              <div class="legend-dot" style="background:var(--critical)"></div>
+              <span class="legend-name">Critical</span>
+              <span class="legend-count" style="color:var(--critical)" id="leg-critical">0</span>
+            </div>
+            <div class="legend-item">
+              <div class="legend-dot" style="background:var(--high)"></div>
+              <span class="legend-name">High</span>
+              <span class="legend-count" style="color:var(--high)" id="leg-high">0</span>
+            </div>
+            <div class="legend-item">
+              <div class="legend-dot" style="background:var(--medium)"></div>
+              <span class="legend-name">Medium</span>
+              <span class="legend-count" style="color:var(--medium)" id="leg-medium">0</span>
+            </div>
+            <div class="legend-item">
+              <div class="legend-dot" style="background:var(--low)"></div>
+              <span class="legend-name">Low</span>
+              <span class="legend-count" style="color:var(--low)" id="leg-low">0</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div class="section-title" style="margin-bottom:.9rem;">Top Patterns</div>
+        <div class="pattern-list" id="pattern-list">
+          <div style="color:var(--text-muted);font-size:.75rem;">No data loaded.</div>
+        </div>
+      </div>
+
+      <div class="usage-card">
+        <div class="usage-title">🚀 Quick Commands</div>
+        <div class="cmd-block">
+          <code><span class="dim"># Basic scan</span><br>python secret_detector.py .</code>
+        </div>
+        <div class="cmd-block">
+          <code>python secret_detector.py . <span class="flag">--severity</span> <span class="val">HIGH</span></code>
+        </div>
+        <div class="cmd-block">
+          <code>python secret_detector.py . <span class="flag">--html</span> <span class="val">report.html</span> <span class="flag">--output</span> <span class="val">report.json</span></code>
+        </div>
+        <div class="cmd-block">
+          <code><span class="dim"># CI mode</span><br>python secret_detector.py . <span class="flag">--exit-code</span></code>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <footer class="footer">
+    <span>🔍 Secret Detector Dashboard</span>
+    <span id="footer-meta">Load a report to see scan details</span>
+  </footer>
+
+</div>
+
+<script>
+  // ── Demo data ──
+  const DEMO = {
+    meta: {
+      scan_path: "/home/user/my-project",
+      scan_time: new Date().toISOString().replace("T"," ").slice(0,19),
+      scanned_files: 42,
+      skipped_files: 8,
+      total_findings: 12,
+      min_severity_filter: "LOW"
+    },
+    severity_breakdown: { CRITICAL: 2, HIGH: 3, MEDIUM: 7, LOW: 0 },
+    findings: [
+      { file: "config/settings.py",        line: 5,  pattern: "AWS Access Key",        severity: "CRITICAL", match: "AKIA[REDACTED-EXAMPLE]",                    context: 'AWS_ACCESS_KEY = "AKIA[REDACTED-EXAMPLE]"' },
+      { file: "config/settings.py",        line: 6,  pattern: "AWS Secret Key",        severity: "CRITICAL", match: 'AWS_SECRET_KEY = "[REDACTED-EXAMPLE]"',      context: 'AWS_SECRET_KEY = "[REDACTED-EXAMPLE]"' },
+      { file: "config/database.py",        line: 9,  pattern: "PostgreSQL URI",        severity: "HIGH",     match: "postgresql://admin:[REDACTED]@db.example.com", context: 'DATABASE_URL = "postgresql://admin:[REDACTED]@db.example.com"' },
+      { file: "payments/stripe.py",        line: 12, pattern: "Stripe Secret Key",     severity: "HIGH",     match: "sk_live_[REDACTED-EXAMPLE]",                context: 'STRIPE_SECRET_KEY = "sk_live_[REDACTED-EXAMPLE]"' },
+      { file: ".env.backup",               line: 16, pattern: "GitHub Token",          severity: "HIGH",     match: "ghp_[REDACTED-EXAMPLE]",                    context: 'GITHUB_TOKEN = "ghp_[REDACTED-EXAMPLE]"' },
+      { file: "payments/stripe.py",        line: 13, pattern: "Stripe Publishable Key",severity: "MEDIUM",   match: "pk_test_[REDACTED-EXAMPLE]",                context: 'STRIPE_PUBLIC_KEY = "pk_test_[REDACTED-EXAMPLE]"' },
+      { file: "config/settings.py",        line: 6,  pattern: "Generic Secret",        severity: "MEDIUM",   match: 'SECRET_KEY = "[REDACTED-EXAMPLE]"',          context: 'SECRET_KEY = "[REDACTED-EXAMPLE]"' },
+      { file: "config/settings.py",        line: 6,  pattern: "High Entropy String",   severity: "MEDIUM",   match: 'KEY = "[REDACTED-EXAMPLE]"',                 context: 'API_KEY = "[REDACTED-EXAMPLE]"' },
+      { file: "api/openai_client.py",      line: 19, pattern: "Generic API Key",       severity: "MEDIUM",   match: 'OPENAI_API_KEY = "[REDACTED-EXAMPLE]"',      context: 'OPENAI_API_KEY = "[REDACTED-EXAMPLE]"' },
+      { file: "config/database.py",        line: 22, pattern: "Generic Password",      severity: "MEDIUM",   match: 'password = "[REDACTED-EXAMPLE]"',            context: 'db_password = "[REDACTED-EXAMPLE]"' },
+      { file: "auth/jwt_helper.py",        line: 25, pattern: "JWT Token",             severity: "MEDIUM",   match: "eyJ[REDACTED-EXAMPLE]...",                   context: 'TOKEN = "eyJ[REDACTED-EXAMPLE]..."' },
+      { file: "payments/stripe.py",        line: 12, pattern: "Generic Secret",        severity: "MEDIUM",   match: 'STRIPE_SECRET_KEY = "[REDACTED-EXAMPLE]"',   context: 'STRIPE_SECRET_KEY = "[REDACTED-EXAMPLE]"' },
+    ]
+  };
+
+  let allFindings = [];
+  let currentFilter = 'ALL';
+
+  function handleUpload(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = ev => {
+      try {
+        const data = JSON.parse(ev.target.result);
+        loadReport(data);
+      } catch {
+        alert('Invalid JSON file.');
+      }
+    };
+    reader.readAsText(file);
+  }
+
+  function loadDemo() { loadReport(DEMO); }
+
+  function loadReport(data) {
+    allFindings = data.findings || [];
+    const meta = data.meta || {};
+    const sev = data.severity_breakdown || {};
+
+    // Stats
+    document.getElementById('stat-total').textContent    = allFindings.length;
+    document.getElementById('stat-critical').textContent = sev.CRITICAL || 0;
+    document.getElementById('stat-high').textContent     = sev.HIGH     || 0;
+    document.getElementById('stat-medium').textContent   = sev.MEDIUM   || 0;
+    document.getElementById('stat-low').textContent      = sev.LOW      || 0;
+    const filesAffected = new Set(allFindings.map(f => f.file)).size;
+    document.getElementById('stat-files').textContent = filesAffected;
+
+    // Scan time topbar
+    document.getElementById('scan-time').textContent = meta.scan_time || 'Loaded';
+
+    // Footer
+    document.getElementById('footer-meta').textContent =
+      `${meta.scan_path || ''} · ${meta.scanned_files || 0} files scanned · ${meta.skipped_files || 0} skipped`;
+
+    // Donut
+    updateDonut(sev);
+
+    // Legends
+    document.getElementById('leg-critical').textContent = sev.CRITICAL || 0;
+    document.getElementById('leg-high').textContent     = sev.HIGH     || 0;
+    document.getElementById('leg-medium').textContent   = sev.MEDIUM   || 0;
+    document.getElementById('leg-low').textContent      = sev.LOW      || 0;
+
+    // Patterns
+    updatePatterns(allFindings);
+
+    // Render findings
+    filterFindings('ALL');
+  }
+
+  function updateDonut(sev) {
+    const total = (sev.CRITICAL||0)+(sev.HIGH||0)+(sev.MEDIUM||0)+(sev.LOW||0);
+    if (!total) return;
+    const circ = 251.2;
+    const segments = [
+      { id: 'arc-critical', val: sev.CRITICAL||0 },
+      { id: 'arc-high',     val: sev.HIGH||0 },
+      { id: 'arc-medium',   val: sev.MEDIUM||0 },
+      { id: 'arc-low',      val: sev.LOW||0 },
+    ];
+    let offset = 0;
+    segments.forEach(seg => {
+      const frac = seg.val / total;
+      const dash = frac * circ;
+      const el = document.getElementById(seg.id);
+      el.setAttribute('stroke-dasharray', `${dash} ${circ - dash}`);
+      el.setAttribute('stroke-dashoffset', -offset);
+      offset += dash;
+    });
+    document.getElementById('donut-total').textContent = total;
+  }
+
+  function updatePatterns(findings) {
+    const counts = {};
+    findings.forEach(f => { counts[f.pattern] = (counts[f.pattern]||0)+1; });
+    const sorted = Object.entries(counts).sort((a,b)=>b[1]-a[1]).slice(0,6);
+    const max = sorted[0]?.[1] || 1;
+    const colors = { CRITICAL:'var(--critical)', HIGH:'var(--high)', MEDIUM:'var(--medium)', LOW:'var(--low)' };
+    const html = sorted.map(([pat,cnt]) => {
+      const sev = (findings.find(f=>f.pattern===pat)||{}).severity || 'MEDIUM';
+      const pct = (cnt/max*100).toFixed(0);
+      return `<div class="pattern-row">
+        <span class="pattern-name" title="${pat}">${pat}</span>
+        <div class="pattern-bar-wrap"><div class="pattern-bar" style="width:${pct}%;background:${colors[sev]};"></div></div>
+        <span class="pattern-count">${cnt}</span>
+      </div>`;
+    }).join('');
+    document.getElementById('pattern-list').innerHTML = html || '<div style="color:var(--text-muted);font-size:.75rem;">No findings.</div>';
+  }
+
+  function filterFindings(severity) {
+    currentFilter = severity;
+
+    // Update chip styles
+    const chipMap = { ALL:'active-all', CRITICAL:'active-critical', HIGH:'active-high', MEDIUM:'active-medium', LOW:'active-low' };
+    document.querySelectorAll('.chip').forEach(c => c.className = 'chip');
+    const labels = { ALL:'All', CRITICAL:'🔴 Critical', HIGH:'🟠 High', MEDIUM:'🟡 Medium', LOW:'🟢 Low' };
+    [...document.querySelectorAll('.chip')].find(c => c.textContent === labels[severity])?.classList.add(chipMap[severity]);
+
+    const filtered = severity === 'ALL' ? allFindings : allFindings.filter(f => f.severity === severity);
+
+    const title = severity === 'ALL'
+      ? `All Findings (${filtered.length})`
+      : `${severity} Findings (${filtered.length})`;
+    document.getElementById('findings-title').textContent = title;
+
+    if (!filtered.length) {
+      document.getElementById('finding-list').innerHTML =
+        `<div style="color:var(--text-muted);font-size:.85rem;padding:2rem 0;text-align:center;">No findings at this severity level.</div>`;
+      return;
+    }
+
+    const sevClass = { CRITICAL:'sev-critical', HIGH:'sev-high', MEDIUM:'sev-medium', LOW:'sev-low' };
+    const html = filtered.map((f,i) => `
+      <div class="finding-card ${sevClass[f.severity]||'sev-medium'}" style="animation-delay:${i*0.03}s">
+        <span class="finding-badge ${(f.severity||'medium').toLowerCase()}">${f.severity}</span>
+        <div class="finding-body">
+          <div class="finding-pattern">${esc(f.pattern)}</div>
+          <div class="finding-file">${esc(f.file)}</div>
+          <div class="finding-match">${esc(f.match)}</div>
+        </div>
+        <span class="finding-line">L${f.line}</span>
+      </div>`).join('');
+
+    document.getElementById('finding-list').innerHTML = html;
+  }
+
+  function esc(s) {
+    return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  // Auto-load demo on start after brief delay
+  setTimeout(() => {
+    if (allFindings.length === 0) loadReport(DEMO);
+  }, 600);
+</script>
+</body>
+</html>
